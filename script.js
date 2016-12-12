@@ -113,27 +113,45 @@ class Game {
         let cellElements = Array.prototype.slice.call(document.getElementsByClassName('cell')),
             emptyElement = document.getElementById('empty'),
             emptyIndex = cellElements.indexOf(emptyElement),
-            movements = {
-                left: element.previousSibling,
-                top: cellElements[cellElements.indexOf(element)-4],
-                right: element.nextSibling,
-                bottom: cellElements[cellElements.indexOf(element)+4]
-            };
+            moveObj = element ? movements(element) : movements(emptyElement);
 
         if (!element){
+            let reverseDir = {
+                left: 'right',
+                up: 'down',
+                right: 'left',
+                down: 'up'
+            },
+                thisElement = moveObj[reverseDir[keyDirection]];
+            thisElement ? replaceCells(thisElement) : false;
 
         } else {
-            for (let key in movements){
-                if(movements.hasOwnProperty(key) && movements[key] === emptyElement){
-                    let currentValue = element.innerHTML;
-                    element.innerHTML = emptyElement.innerHTML;
-                    emptyElement.innerHTML = currentValue;
-
-                    element.setAttribute('id', 'empty');
-                    emptyElement.removeAttribute('id');
+            for (let key in moveObj){
+                if(moveObj.hasOwnProperty(key) && moveObj[key] === emptyElement){
+                    replaceCells(element);
                 }
             }
         }
+
+        function replaceCells(currentElement){
+            let currentValue = currentElement.innerHTML;
+            currentElement.innerHTML = emptyElement.innerHTML;
+            emptyElement.innerHTML = currentValue;
+
+            currentElement.setAttribute('id', 'empty');
+            emptyElement.removeAttribute('id');
+        }
+
+        function movements(el) {
+            let direction = {
+                left: el.previousSibling,
+                up: cellElements[cellElements.indexOf(el)-4],
+                right: el.nextSibling,
+                down: cellElements[cellElements.indexOf(el)+4]
+            };
+
+            return direction;
+        };
 
     }
 }
