@@ -96,3 +96,4 @@ class Game {
 (function () {
     window.onload = () => new Game('Fifteen Puzzle', 'game');
 }());
+
