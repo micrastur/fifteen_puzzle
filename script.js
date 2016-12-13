@@ -8,35 +8,45 @@ class Game {
         let data = {
             name: name,
             defaultSize: [4, 4],
-            blockElement: gameContent
+            blockElement: gameContent,
+            reverseDirection: {
+                left: 'right',
+                top: 'bottom',
+                right: 'left',
+                bottom: 'top'
+            },
+            cellsElement: null
         };
         data.cells = data.defaultSize[0] * data.defaultSize[1];
         data.content = this.mixData(data.cells);
-
-        this.getData = () => {
-            let dataCopy = data;
-            return dataCopy;
-        };
+        this.count = 0;
+        this.moveBlocker = false;
+        this.getData = data;
         this.init();
     }
 
     init() {
-        let gameData = this.getData(),
+        let gameData = this.getData,
             gameElement = gameData.blockElement,
             gameContent = gameData.content;
 
 
         document.getElementsByTagName('h1')[0].innerHTML = gameData.name;
-        this.buildTable(gameElement, gameData.defaultSize);
+        this.buildGame(gameElement, gameData.defaultSize);
         this.fillContent(gameContent);
         this.activateGame();
     }
 
-    buildTable(element, size) {
-        let row = size[0],
+    buildGame(element, size) {
+        let wrapperElement = document.getElementById(element),
+            scoreElement = document.createElement("div"),
+            row = size[0],
             col = size[1],
             str = "";
 
+        scoreElement.setAttribute('id', 'score');
+        this.scoreElement = wrapperElement.parentNode.insertBefore(scoreElement, wrapperElement);
+        this.scoreElement.innerHTML = '<h2>Scores: &nbsp;<span id="count">0</span></h2>';
         for (let i = 0; i < row; i++) {
             let item = i + 1;
             str += "<div class='row'>";
@@ -45,7 +55,7 @@ class Game {
             }
             str += "</div>";
         }
-        document.getElementById(element).innerHTML = str;
+        wrapperElement.innerHTML = str;
     }
     mixData(cellsAmount) {
         let numbers = [],
@@ -60,10 +70,11 @@ class Game {
             numbers.push(randomItem);
         }
 
-        return this.checkStage(numbers);
+        return this.checkState(numbers, cellsAmount);
     }
-    checkStage(numbers) {
-        let comparableItems = 0;
+    checkState(numbers, cellsAmount) {
+        let comparableItems = Math.ceil((numbers.indexOf('')+1)/4);
+
         for (let i = 1, len = numbers.length; i < len; i++){
             let currentItem = numbers[i];
             if(currentItem !== ''){
@@ -74,25 +85,23 @@ class Game {
                 }
             }
         }
-
-        console.log(comparableItems);
-        console.log(numbers);
         if(comparableItems % 2 !== 0){
-            let n = numbers[0];
-            numbers[0] = numbers[1];
-            numbers[1] = n;
+            this.mixData(cellsAmount)
         }
-        console.log(numbers);
+        console.log(comparableItems + ': ' + numbers);
         return numbers;
     }
     fillContent(content) {
-        let cellsElement = document.querySelectorAll('.cell');
+        this.getData.cellsElement = Array.prototype.slice.call(document.querySelectorAll('.cell'));
+        let emptyElement,
+            cellsElement = this.getData.cellsElement;
         for (let i = 0, len = content.length; i < len; i++){
             let contentItem = content[i],
                 currentElement = cellsElement[i];
 
             if (typeof contentItem !== "number") {
-                currentElement.id = "empty"
+                currentElement.id = "empty";
+                emptyElement = currentElement;
             }
             currentElement.innerHTML = contentItem;
         }
@@ -101,6 +110,7 @@ class Game {
         let _self = this;
         document.onkeydown =  function (event) {
             let keyName = event.code.toLocaleLowerCase().replace('arrow', '');
+            keyName = keyName === 'up' ? 'top' : keyName === 'down' ? 'bottom' : keyName;
             _self.move(null, keyName);
         };
         document.getElementById('game').onclick = function (event) {
@@ -109,50 +119,49 @@ class Game {
             }
         }
     }
+    movements(el, elslist) {
+        return {
+            left: el.previousSibling,
+            top: elslist[elslist.indexOf(el)-4],
+            right: el.nextSibling,
+            bottom: elslist[elslist.indexOf(el)+4]
+        };
+    };
     move(element, keyDirection) {
-        let cellElements = Array.prototype.slice.call(document.getElementsByClassName('cell')),
+        if(this.moveBlocker) return;
+        let cellElements = this.getData.cellsElement,
             emptyElement = document.getElementById('empty'),
-            emptyIndex = cellElements.indexOf(emptyElement),
-            moveObj = element ? movements(element) : movements(emptyElement);
+            moveObj = element
+                ? this.movements(element, cellElements)
+                : this.movements(emptyElement, cellElements);
 
         if (!element){
-            let reverseDir = {
-                left: 'right',
-                up: 'down',
-                right: 'left',
-                down: 'up'
-            },
-                thisElement = moveObj[reverseDir[keyDirection]];
-            thisElement ? replaceCells(thisElement) : false;
+            let thisElement = moveObj[this.getData.reverseDirection[keyDirection]];
+            thisElement ? this.replaceCells(thisElement, emptyElement,keyDirection) : false;
 
         } else {
             for (let key in moveObj){
                 if(moveObj.hasOwnProperty(key) && moveObj[key] === emptyElement){
-                    replaceCells(element);
+                    this.replaceCells(element, emptyElement,key);
+                    return false;
                 }
             }
         }
-
-        function replaceCells(currentElement){
+    }
+    replaceCells(currentElement, emptyElement, direction){
+        this.count += 1;
+        document.getElementById('count').innerHTML = this.count;
+        currentElement.className = 'cell '+ direction;
+        this.moveBlocker = true;
+        setTimeout(function(){
+            this.moveBlocker = false;
             let currentValue = currentElement.innerHTML;
             currentElement.innerHTML = emptyElement.innerHTML;
             emptyElement.innerHTML = currentValue;
-
             currentElement.setAttribute('id', 'empty');
             emptyElement.removeAttribute('id');
-        }
-
-        function movements(el) {
-            let direction = {
-                left: el.previousSibling,
-                up: cellElements[cellElements.indexOf(el)-4],
-                right: el.nextSibling,
-                down: cellElements[cellElements.indexOf(el)+4]
-            };
-
-            return direction;
-        };
-
+            currentElement.className = 'cell';
+        }.bind(this), 250);
     }
 }
 
