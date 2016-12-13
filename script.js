@@ -20,6 +20,7 @@ class Game {
         data.cells = data.defaultSize[0] * data.defaultSize[1];
         data.content = this.mixData(data.cells);
 
+        this.moveBlocker = false;
         this.getData = data;
         this.init();
     }
@@ -64,9 +65,9 @@ class Game {
             numbers.push(randomItem);
         }
 
-        return this.checkState(numbers);
+        return this.checkState(numbers, cellsAmount);
     }
-    checkState(numbers) {
+    checkState(numbers, cellsAmount) {
         let comparableItems = Math.ceil((numbers.indexOf('')+1)/4);
 
         for (let i = 1, len = numbers.length; i < len; i++){
@@ -80,10 +81,9 @@ class Game {
             }
         }
         if(comparableItems % 2 !== 0){
-            let n = numbers[0];
-            numbers[0] = numbers[1];
-            numbers[1] = n;
+            this.mixData(cellsAmount)
         }
+        console.log(comparableItems + ': ' + numbers);
         return numbers;
     }
     fillContent(content) {
@@ -137,6 +137,7 @@ class Game {
         };
     };
     move(element, keyDirection) {
+        if(this.moveBlocker) return;
         let cellElements = this.getData.cellsElement,
             emptyElement = document.getElementById('empty'),
             moveObj = element
@@ -145,27 +146,29 @@ class Game {
 
         if (!element){
             let thisElement = moveObj[this.getData.reverseDirection[keyDirection]];
-            thisElement ? this.replaceCells(thisElement, emptyElement) : false;
+            thisElement ? this.replaceCells(thisElement, emptyElement,keyDirection) : false;
 
         } else {
             for (let key in moveObj){
                 if(moveObj.hasOwnProperty(key) && moveObj[key] === emptyElement){
-                    this.replaceCells(element, emptyElement);
+                    this.replaceCells(element, emptyElement,key);
                     return false;
                 }
             }
         }
     }
-    replaceCells(currentElement, emptyElement){
-
-        currentElement.setAttribute('id', 'empty');
-        emptyElement.removeAttribute('id');
-
+    replaceCells(currentElement, emptyElement, direction){
+        currentElement.className = 'cell '+ direction;
+        this.moveBlocker = true;
         setTimeout(function(){
+            this.moveBlocker = false;
             let currentValue = currentElement.innerHTML;
             currentElement.innerHTML = emptyElement.innerHTML;
             emptyElement.innerHTML = currentValue;
-        }, 250);
+            currentElement.setAttribute('id', 'empty');
+            emptyElement.removeAttribute('id');
+            currentElement.className = 'cell';
+        }.bind(this), 250);
     }
 }
 
