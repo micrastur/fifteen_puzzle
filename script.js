@@ -8,20 +8,24 @@ class Game {
         let data = {
             name: name,
             defaultSize: [4, 4],
-            blockElement: gameContent
+            blockElement: gameContent,
+            reverseDirection: {
+                left: 'right',
+                top: 'bottom',
+                right: 'left',
+                bottom: 'top'
+            },
+            cellsElement: null
         };
         data.cells = data.defaultSize[0] * data.defaultSize[1];
         data.content = this.mixData(data.cells);
 
-        this.getData = () => {
-            let dataCopy = data;
-            return dataCopy;
-        };
+        this.getData = data;
         this.init();
     }
 
     init() {
-        let gameData = this.getData(),
+        let gameData = this.getData,
             gameElement = gameData.blockElement,
             gameContent = gameData.content;
 
@@ -60,10 +64,11 @@ class Game {
             numbers.push(randomItem);
         }
 
-        return this.checkStage(numbers);
+        return this.checkState(numbers);
     }
-    checkStage(numbers) {
-        let comparableItems = 0;
+    checkState(numbers) {
+        let comparableItems = Math.ceil((numbers.indexOf('')+1)/4);
+
         for (let i = 1, len = numbers.length; i < len; i++){
             let currentItem = numbers[i];
             if(currentItem !== ''){
@@ -74,33 +79,47 @@ class Game {
                 }
             }
         }
-
-        console.log(comparableItems);
-        console.log(numbers);
         if(comparableItems % 2 !== 0){
             let n = numbers[0];
             numbers[0] = numbers[1];
             numbers[1] = n;
         }
-        console.log(numbers);
         return numbers;
     }
     fillContent(content) {
-        let cellsElement = document.querySelectorAll('.cell');
+        this.getData.cellsElement = Array.prototype.slice.call(document.querySelectorAll('.cell'));
+        let emptyElement,
+            cellsElement = this.getData.cellsElement;
         for (let i = 0, len = content.length; i < len; i++){
             let contentItem = content[i],
                 currentElement = cellsElement[i];
 
             if (typeof contentItem !== "number") {
-                currentElement.id = "empty"
+                currentElement.id = "empty";
+                emptyElement = currentElement;
             }
             currentElement.innerHTML = contentItem;
         }
+        //this.setPositionClasses(emptyElement, cellsElement);
     }
+    //setPositionClasses(emptyElement, cellsElement){
+    //    let direction = this.movements(emptyElement, cellsElement);
+    //    for (let key in direction){
+    //        let element = direction[key],
+    //            classElement = document.getElementsByClassName(key);
+    //        if(classElement.length){
+    //            classElement.classList.remove(key);
+    //        }
+    //        if(direction.hasOwnProperty(key) && element){
+    //            direction[key].className += ' ' + key;
+    //        }
+    //    }
+    //}
     activateGame() {
         let _self = this;
         document.onkeydown =  function (event) {
             let keyName = event.code.toLocaleLowerCase().replace('arrow', '');
+                keyName = keyName === 'up' ? 'top' : keyName === 'down' ? 'bottom' : keyName;
             _self.move(null, keyName);
         };
         document.getElementById('game').onclick = function (event) {
@@ -109,50 +128,44 @@ class Game {
             }
         }
     }
+    movements(el, elslist) {
+        return {
+            left: el.previousSibling,
+            top: elslist[elslist.indexOf(el)-4],
+            right: el.nextSibling,
+            bottom: elslist[elslist.indexOf(el)+4]
+        };
+    };
     move(element, keyDirection) {
-        let cellElements = Array.prototype.slice.call(document.getElementsByClassName('cell')),
+        let cellElements = this.getData.cellsElement,
             emptyElement = document.getElementById('empty'),
-            emptyIndex = cellElements.indexOf(emptyElement),
-            moveObj = element ? movements(element) : movements(emptyElement);
+            moveObj = element
+                ? this.movements(element, cellElements)
+                : this.movements(emptyElement, cellElements);
 
         if (!element){
-            let reverseDir = {
-                left: 'right',
-                up: 'down',
-                right: 'left',
-                down: 'up'
-            },
-                thisElement = moveObj[reverseDir[keyDirection]];
-            thisElement ? replaceCells(thisElement) : false;
+            let thisElement = moveObj[this.getData.reverseDirection[keyDirection]];
+            thisElement ? this.replaceCells(thisElement, emptyElement) : false;
 
         } else {
             for (let key in moveObj){
                 if(moveObj.hasOwnProperty(key) && moveObj[key] === emptyElement){
-                    replaceCells(element);
+                    this.replaceCells(element, emptyElement);
+                    return false;
                 }
             }
         }
+    }
+    replaceCells(currentElement, emptyElement){
 
-        function replaceCells(currentElement){
+        currentElement.setAttribute('id', 'empty');
+        emptyElement.removeAttribute('id');
+
+        setTimeout(function(){
             let currentValue = currentElement.innerHTML;
             currentElement.innerHTML = emptyElement.innerHTML;
             emptyElement.innerHTML = currentValue;
-
-            currentElement.setAttribute('id', 'empty');
-            emptyElement.removeAttribute('id');
-        }
-
-        function movements(el) {
-            let direction = {
-                left: el.previousSibling,
-                up: cellElements[cellElements.indexOf(el)-4],
-                right: el.nextSibling,
-                down: cellElements[cellElements.indexOf(el)+4]
-            };
-
-            return direction;
-        };
-
+        }, 250);
     }
 }
 
