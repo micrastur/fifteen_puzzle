@@ -20,7 +20,6 @@ class Game {
         data.cells = data.defaultSize[0] * data.defaultSize[1];
         data.content = this.mixData(data.cells);
         this.count = 0;
-        this.moveBlocker = false;
         this.getData = data;
         this.init();
     }
@@ -150,17 +149,18 @@ class Game {
     }
     replaceCells(currentElement, emptyElement, direction){
         this.count += 1;
+        let content = this.getData.content;
         document.getElementById('count').innerHTML = this.count;
         currentElement.className = 'cell '+ direction;
-        this.moveBlocker = true;
         setTimeout(function(){
-            this.moveBlocker = false;
             let currentValue = currentElement.innerHTML;
             currentElement.innerHTML = emptyElement.innerHTML;
             emptyElement.innerHTML = currentValue;
             currentElement.setAttribute('id', 'empty');
             emptyElement.removeAttribute('id');
             currentElement.className = 'cell';
+
+
         }.bind(this), 250);
     }
 }
