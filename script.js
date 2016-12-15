@@ -159,8 +159,6 @@ class Game {
             currentElement.setAttribute('id', 'empty');
             emptyElement.removeAttribute('id');
             currentElement.className = 'cell';
-
-
         }.bind(this), 250);
     }
 }
