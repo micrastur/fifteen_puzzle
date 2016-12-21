@@ -79,6 +79,12 @@ div.row {
     top: 0;
     /*position: absolute;*/
 }
+
+.win-color {
+    color: #fff;
+    background: forestgreen;
+}
+
 .cell.left{
     left: -50px;
     transition: left .20s, top .25s;

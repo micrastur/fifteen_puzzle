@@ -21,6 +21,7 @@ class Game {
         data.content = this.mixData(data.cells);
         this.count = 0;
         this.getData = data;
+        this.moveCells;
         this.init();
     }
 
@@ -47,7 +48,6 @@ class Game {
         this.scoreElement = wrapperElement.parentNode.insertBefore(scoreElement, wrapperElement);
         this.scoreElement.innerHTML = '<h2>Scores: &nbsp;<span id="count">0</span></h2>';
         for (let i = 0; i < row; i++) {
-            let item = i + 1;
             str += "<div class='row'>";
             for (let k = 0; k < col; k++) {
                 str += "<div class='cell'></div>";
@@ -98,7 +98,7 @@ class Game {
             let contentItem = content[i],
                 currentElement = cellsElement[i];
 
-            if (typeof contentItem !== "number") {
+            if (!contentItem) {
                 currentElement.id = "empty";
                 emptyElement = currentElement;
             }
@@ -108,6 +108,7 @@ class Game {
     activateGame() {
         let _self = this;
         document.onkeydown =  function (event) {
+            _self.moveCells ? clearInterval(_self.moveCells) : false;
             let keyName = event.code.toLocaleLowerCase().replace('arrow', '');
             keyName = keyName === 'up' ? 'top' : keyName === 'down' ? 'bottom' : keyName;
             _self.move(null, keyName);
@@ -127,7 +128,6 @@ class Game {
         };
     };
     move(element, keyDirection) {
-        if(this.moveBlocker) return;
         let cellElements = this.getData.cellsElement,
             emptyElement = document.getElementById('empty'),
             moveObj = element
@@ -141,7 +141,7 @@ class Game {
         } else {
             for (let key in moveObj){
                 if(moveObj.hasOwnProperty(key) && moveObj[key] === emptyElement){
-                    this.replaceCells(element, emptyElement,key);
+                    this.replaceCells(element, emptyElement, key);
                     return false;
                 }
             }
@@ -149,17 +149,41 @@ class Game {
     }
     replaceCells(currentElement, emptyElement, direction){
         this.count += 1;
-        let content = this.getData.content;
-        document.getElementById('count').innerHTML = this.count;
-        currentElement.className = 'cell '+ direction;
-        setTimeout(function(){
-            let currentValue = currentElement.innerHTML;
-            currentElement.innerHTML = emptyElement.innerHTML;
-            emptyElement.innerHTML = currentValue;
-            currentElement.setAttribute('id', 'empty');
-            emptyElement.removeAttribute('id');
-            currentElement.className = 'cell';
+        let content = this.getData.content,
+            contentElements = this.getData.cellsElement,
+            elementsData = {
+                current: [currentElement, currentElement.innerHTML],
+                empty: [emptyElement, emptyElement.innerHTML]
+            };
+
+        this.moveCells = setTimeout(function(){
+            currentElement.className = 'cell '+ direction;
+            document.getElementById('count').innerHTML = this.count;
+            for (let key in elementsData){
+                if (elementsData.hasOwnProperty(key)){
+                    let element = elementsData[key][0],
+                        contraryElText = elementsData[key === 'current' ? 'empty' : 'current'][1];
+                    element.innerHTML = contraryElText;
+                    content[contentElements.indexOf(element)] = contraryElText;
+                    element.id ? element.removeAttribute('id') : element.setAttribute('id', 'empty');
+                    key === 'current' ? element.className = 'cell' : false;
+                }
+            }console.log(this.getData.content);this.checkWin(content);
         }.bind(this), 250);
+
+        console.log(this.moveCells);
+    }
+    checkWin(content){
+        let elements = this.getData.cellsElement,
+            currentEl;
+        for (let i = 0, len = content.length; i < len; i++){
+            currentEl = elements[i];
+           if(content[i] != i+1){
+               currentEl.classList.remove('win-color');
+           } else {
+               currentEl.className += ' win-color';
+           }
+        }
     }
 }
 
