@@ -168,22 +168,28 @@ class Game {
                     element.id ? element.removeAttribute('id') : element.setAttribute('id', 'empty');
                     key === 'current' ? element.className = 'cell' : false;
                 }
-            }console.log(this.getData.content);this.checkWin(content);
+            }
+            console.log(this.getData.content);
+            this.checkWin(content);
+
         }.bind(this), 250);
 
         console.log(this.moveCells);
     }
     checkWin(content){
         let elements = this.getData.cellsElement,
-            currentEl;
+            currentEl,
+            win;
         for (let i = 0, len = content.length; i < len; i++){
             currentEl = elements[i];
            if(content[i] != i+1){
                currentEl.classList.remove('win-color');
            } else {
+               win = true;
                currentEl.className += ' win-color';
            }
         }
+        return win;
     }
 }
 
