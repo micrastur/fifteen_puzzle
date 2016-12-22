@@ -41,7 +41,11 @@ body {
     margin: 0;
 }
 
-#count {
+#win {
+    display: none;
+}
+
+.count {
     color: #ffe173;
 }
 
