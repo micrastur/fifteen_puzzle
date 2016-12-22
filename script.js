@@ -34,19 +34,16 @@ class Game {
         document.getElementsByTagName('h1')[0].innerHTML = gameData.name;
         this.buildGame(gameElement, gameData.defaultSize);
         this.fillContent(gameContent);
+        this.checkWinState(gameContent);
         this.activateGame();
     }
 
     buildGame(element, size) {
         let wrapperElement = document.getElementById(element),
-            scoreElement = document.createElement("div"),
             row = size[0],
             col = size[1],
             str = "";
 
-        scoreElement.setAttribute('id', 'score');
-        this.scoreElement = wrapperElement.parentNode.insertBefore(scoreElement, wrapperElement);
-        this.scoreElement.innerHTML = '<h2>Scores: &nbsp;<span id="count">0</span></h2>';
         for (let i = 0; i < row; i++) {
             str += "<div class='row'>";
             for (let k = 0; k < col; k++) {
@@ -69,9 +66,9 @@ class Game {
             numbers.push(randomItem);
         }
 
-        return this.checkState(numbers, cellsAmount);
+        return this.checkResolution(numbers, cellsAmount);
     }
-    checkState(numbers, cellsAmount) {
+    checkResolution(numbers, cellsAmount) {
         let comparableItems = Math.ceil((numbers.indexOf('')+1)/4);
 
         for (let i = 1, len = numbers.length; i < len; i++){
@@ -155,10 +152,10 @@ class Game {
                 current: [currentElement, currentElement.innerHTML],
                 empty: [emptyElement, emptyElement.innerHTML]
             };
-
+        currentElement.className = 'cell '+ direction;
         this.moveCells = setTimeout(function(){
-            currentElement.className = 'cell '+ direction;
-            document.getElementById('count').innerHTML = this.count;
+
+            document.getElementsByClassName('count').innerHTML = this.count;
             for (let key in elementsData){
                 if (elementsData.hasOwnProperty(key)){
                     let element = elementsData[key][0],
@@ -169,27 +166,31 @@ class Game {
                     key === 'current' ? element.className = 'cell' : false;
                 }
             }
-            console.log(this.getData.content);
-            this.checkWin(content);
-
+            this.checkWinState(content) ? this.win() : false;
         }.bind(this), 250);
 
         console.log(this.moveCells);
     }
-    checkWin(content){
-        let elements = this.getData.cellsElement,
-            currentEl,
-            win;
+    checkWinState(content){
+        let elements = this.getData.cellsElement, currentEl, currentElClassList, win;
+
         for (let i = 0, len = content.length; i < len; i++){
             currentEl = elements[i];
-           if(content[i] != i+1){
-               currentEl.classList.remove('win-color');
-           } else {
-               win = true;
-               currentEl.className += ' win-color';
-           }
+            currentElClassList = currentEl.classList;
+            if(content[i] != i+1){
+                currentElClassList.remove('win-color');
+            } else {
+                win = true;
+                if(!currentElClassList.contains('win-color')){
+                    currentEl.className += ' win-color';
+                }
+
+            }
         }
         return win;
+    }
+    win(){
+        //document.getElementById('win').style.display = 'block';
     }
 }
 
