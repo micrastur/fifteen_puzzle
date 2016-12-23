@@ -103,9 +103,9 @@ class Game {
         }
     }
     activateGame() {
-        let _self = this;
+        let _self = this,
+            winElement = document.getElementById('win');
         document.onkeydown =  function (event) {
-            _self.moveCells ? clearInterval(_self.moveCells) : false;
             let keyName = event.code.toLocaleLowerCase().replace('arrow', '');
             keyName = keyName === 'up' ? 'top' : keyName === 'down' ? 'bottom' : keyName;
             _self.move(null, keyName);
@@ -114,6 +114,9 @@ class Game {
             if(event.target !== this && !event.target.id){
                 _self.move(event.target);
             }
+        };
+        winElement.onclick = function() {
+            winElement.style.display = 'none';
         }
     }
     movements(el, elslist) {
@@ -146,41 +149,43 @@ class Game {
     }
     replaceCells(currentElement, emptyElement, direction){
         this.count += 1;
+
         let content = this.getData.content,
             contentElements = this.getData.cellsElement,
             elementsData = {
                 current: [currentElement, currentElement.innerHTML],
                 empty: [emptyElement, emptyElement.innerHTML]
             };
-        currentElement.className = 'cell '+ direction;
-        this.moveCells = setTimeout(function(){
-
-            document.getElementsByClassName('count').innerHTML = this.count;
-            for (let key in elementsData){
-                if (elementsData.hasOwnProperty(key)){
-                    let element = elementsData[key][0],
-                        contraryElText = elementsData[key === 'current' ? 'empty' : 'current'][1];
-                    element.innerHTML = contraryElText;
-                    content[contentElements.indexOf(element)] = contraryElText;
-                    element.id ? element.removeAttribute('id') : element.setAttribute('id', 'empty');
-                    key === 'current' ? element.className = 'cell' : false;
+        if(!this.moveCells) {
+            this.moveCells = true;
+            currentElement.className = 'cell ' + direction;
+            setTimeout(function () {
+                document.getElementById('count').innerHTML = this.count;
+                for (let key in elementsData) {
+                    if (elementsData.hasOwnProperty(key)) {
+                        let element = elementsData[key][0],
+                            contraryElText = elementsData[key === 'current' ? 'empty' : 'current'][1];
+                        element.innerHTML = contraryElText;
+                        content[contentElements.indexOf(element)] = contraryElText;
+                        element.id ? element.removeAttribute('id') : element.setAttribute('id', 'empty');
+                        key === 'current' ? element.className = 'cell' : false;
+                    }
                 }
-            }
-            this.checkWinState(content) ? this.win() : false;
-        }.bind(this), 250);
-
-        console.log(this.moveCells);
+                this.checkWinState(content) ? this.win() : false;
+                this.moveCells = false;
+            }.bind(this), 250);
+        }
     }
     checkWinState(content){
-        let elements = this.getData.cellsElement, currentEl, currentElClassList, win;
+        let elements = this.getData.cellsElement, currentEl, currentElClassList, win = true;
 
-        for (let i = 0, len = content.length; i < len; i++){
+        for (let i = 0, len = content.length - 1; i < len; i++){
             currentEl = elements[i];
             currentElClassList = currentEl.classList;
             if(content[i] != i+1){
                 currentElClassList.remove('win-color');
+                win = false;
             } else {
-                win = true;
                 if(!currentElClassList.contains('win-color')){
                     currentEl.className += ' win-color';
                 }
@@ -190,7 +195,9 @@ class Game {
         return win;
     }
     win(){
-        //document.getElementById('win').style.display = 'block';
+        document.getElementById('win').style.display = 'flex';
+        document.getElementById('win-count').innerHTML = this.count;
+
     }
 }
 
