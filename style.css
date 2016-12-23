@@ -43,6 +43,38 @@ body {
 
 #win {
     display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0,0,0,.2);
+    position: absolute;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+}
+
+.win-info {
+    background-color: #ffe173;
+    border: 5px solid #fff;
+    border-radius: 50px;
+    box-shadow: 0 0 10px #5a5301;
+    text-align: center;
+    margin-left: -250px;
+    width: 500px;
+    position: absolute;
+    left: 50%;
+}
+
+.win-info h2 {
+    color: #017722;
+}
+
+#win-count {
+    color: #4e93cc;
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: -2px;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .count {
