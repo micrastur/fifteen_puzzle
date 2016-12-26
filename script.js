@@ -5,21 +5,23 @@
 
 class Game {
     constructor (name, gameContent) {
-        let data = {
-            name: name,
-            defaultSize: [4, 4],
-            blockElement: gameContent,
-            reverseDirection: {
-                left: 'right',
-                top: 'bottom',
-                right: 'left',
-                bottom: 'top'
-            },
-            cellsElement: null
-        };
+        let savedContent = localStorage.getItem('content'),
+            savedCount = localStorage.getItem('count'),
+            data = {
+                name: name,
+                defaultSize: [4, 4],
+                blockElement: gameContent,
+                reverseDirection: {
+                    left: 'right',
+                    top: 'bottom',
+                    right: 'left',
+                    bottom: 'top'
+                },
+                cellsElement: null
+            };
         data.cells = data.defaultSize[0] * data.defaultSize[1];
-        data.content = this.mixData(data.cells);
-        this.count = 0;
+        data.content = savedContent ? savedContent.split(',') : this.mixData(data.cells);
+        this.count = savedCount ? parseInt(savedCount) : 0;
         this.getData = data;
         this.moveCells;
         this.init();
@@ -27,15 +29,19 @@ class Game {
 
     init() {
         let gameData = this.getData,
-            gameElement = gameData.blockElement,
-            gameContent = gameData.content;
-
+            gameContent = gameData.content,
+            winElement = document.getElementById('win');
 
         document.getElementsByTagName('h1')[0].innerHTML = gameData.name;
-        this.buildGame(gameElement, gameData.defaultSize);
-        this.fillContent(gameContent);
+        this.buildGame(gameData.blockElement, gameData.defaultSize);
+        this.fillContent(gameContent, this.count);
         this.checkWinState(gameContent);
         this.activateGame();
+
+
+        winElement.onclick = function() {
+            winElement.style.display = 'none';
+        }
     }
 
     buildGame(element, size) {
@@ -87,10 +93,12 @@ class Game {
         console.log(comparableItems + ': ' + numbers);
         return numbers;
     }
-    fillContent(content) {
+    fillContent(content, count) {
         this.getData.cellsElement = Array.prototype.slice.call(document.querySelectorAll('.cell'));
         let emptyElement,
-            cellsElement = this.getData.cellsElement;
+            cellsElement = this.getData.cellsElement,
+            countElement = document.getElementById('count');
+
         for (let i = 0, len = content.length; i < len; i++){
             let contentItem = content[i],
                 currentElement = cellsElement[i];
@@ -101,23 +109,29 @@ class Game {
             }
             currentElement.innerHTML = contentItem;
         }
+        countElement.innerHTML = count;
     }
     activateGame() {
-        let _self = this,
-            winElement = document.getElementById('win');
+        let _self = this, direction, element,
+            launch = (event) => {
+                let keyName = event.code;
+                direction = keyName ? keyName.toLocaleLowerCase().replace('arrow', '') : false;
+
+                if(!direction && !event.target.id) {
+                    element = event.target;
+                } else {
+                    element = null;
+                    direction = direction === 'up' ? 'top' : direction === 'down' ? 'bottom' : direction;
+                }
+                return _self.move(element, direction);
+            };
+
         document.onkeydown =  function (event) {
-            let keyName = event.code.toLocaleLowerCase().replace('arrow', '');
-            keyName = keyName === 'up' ? 'top' : keyName === 'down' ? 'bottom' : keyName;
-            _self.move(null, keyName);
+            launch(event);
         };
         document.getElementById('game').onclick = function (event) {
-            if(event.target !== this && !event.target.id){
-                _self.move(event.target);
-            }
+            launch(event);
         };
-        winElement.onclick = function() {
-            winElement.style.display = 'none';
-        }
     }
     movements(el, elslist) {
         return {
@@ -128,30 +142,39 @@ class Game {
         };
     };
     move(element, keyDirection) {
-        let cellElements = this.getData.cellsElement,
+        let gameData = this.getData,
+            cellElements = gameData.cellsElement,
             emptyElement = document.getElementById('empty'),
+            replacedElement,
             moveObj = element
                 ? this.movements(element, cellElements)
-                : this.movements(emptyElement, cellElements);
+                : this.movements(emptyElement, cellElements),
+
+            thisElement = element ? element : moveObj[gameData.reverseDirection[keyDirection]];
 
         if (!element){
-            let thisElement = moveObj[this.getData.reverseDirection[keyDirection]];
-            thisElement ? this.replaceCells(thisElement, emptyElement,keyDirection) : false;
-
+            replacedElement = thisElement ? [thisElement, emptyElement, keyDirection] : false;
         } else {
             for (let key in moveObj){
                 if(moveObj.hasOwnProperty(key) && moveObj[key] === emptyElement){
-                    this.replaceCells(element, emptyElement, key);
-                    return false;
+                    replacedElement = [thisElement, emptyElement, key];
+                    break;
                 }
             }
         }
+
+        if(element || thisElement) {return this.replaceCells(replacedElement, gameData);}
     }
-    replaceCells(currentElement, emptyElement, direction){
+    replaceCells(replacedElement, data){
         this.count += 1;
 
-        let content = this.getData.content,
-            contentElements = this.getData.cellsElement,
+        let elementArgs = arguments[0],
+            currentElement = elementArgs[0],
+            emptyElement = elementArgs[1],
+            direction = elementArgs[2],
+
+            content = data.content,
+            contentElements = data.cellsElement,
             elementsData = {
                 current: [currentElement, currentElement.innerHTML],
                 empty: [emptyElement, emptyElement.innerHTML]
@@ -171,13 +194,13 @@ class Game {
                         key === 'current' ? element.className = 'cell' : false;
                     }
                 }
-                this.checkWinState(content) ? this.win() : false;
                 this.moveCells = false;
+                return this.checkWinState(content) ? this.win(content) ? true : false : false;
             }.bind(this), 250);
         }
     }
     checkWinState(content){
-        let elements = this.getData.cellsElement, currentEl, currentElClassList, win = true;
+        let elements = this.getData.cellsElement, currentEl, currentElClassList, win = true, count = this.count;
 
         for (let i = 0, len = content.length - 1; i < len; i++){
             currentEl = elements[i];
@@ -192,11 +215,17 @@ class Game {
 
             }
         }
+        localStorage.setItem('content', content);
+        localStorage.setItem('count', count);
         return win;
     }
-    win(){
+    win(content){
+        let count = this.count;
         document.getElementById('win').style.display = 'flex';
         document.getElementById('win-count').innerHTML = this.count;
+        localStorage.removeItem('content');
+        localStorage.removeItem('count');
+        return true;
 
     }
 }
