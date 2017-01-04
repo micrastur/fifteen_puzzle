@@ -9,32 +9,33 @@ class Game {
             savedCount = localStorage.getItem('count'),
             data = {
                 name: name,
-                defaultSize: [4, 4],
-                blockElement: gameContent,
+                size: [4, 4],
+                cells: 16,
+                cellsElement: null,
+                moveCells: false,
+                blockId: gameContent,
+
                 reverseDirection: {
                     left: 'right',
                     top: 'bottom',
                     right: 'left',
                     bottom: 'top'
                 },
-                cellsElement: null
+                count: savedCount ? parseInt(savedCount) : 0
             };
-        data.cells = data.defaultSize[0] * data.defaultSize[1];
         data.content = savedContent ? savedContent.split(',') : this.mixData(data.cells);
-        this.count = savedCount ? parseInt(savedCount) : 0;
-        this.getData = data;
-        this.moveCells;
+        this.gameData = data;
         this.init();
     }
 
     init() {
-        let gameData = this.getData,
+        let gameData = this.gameData,
             gameContent = gameData.content,
             winElement = document.getElementById('win');
 
         document.getElementsByTagName('h1')[0].innerHTML = gameData.name;
-        this.buildGame(gameData.blockElement, gameData.defaultSize);
-        this.fillContent(gameContent, this.count);
+        this.buildGame(gameData.blockId, gameData.size);
+        this.fillContent(gameContent, gameData.count);
         this.checkWinState(gameContent);
         this.activateGame();
 
@@ -77,26 +78,24 @@ class Game {
     checkResolution(numbers, cellsAmount) {
         let comparableItems = Math.ceil((numbers.indexOf('')+1)/4);
 
-        for (let i = 1, len = numbers.length; i < len; i++){
+        for (let i = 0, len = numbers.length; i < len; i++){
             let currentItem = numbers[i];
             if(currentItem !== ''){
-                for (let k = i-1; k >= 0; k--){
+                for (let k = i+1; k < len; k++){
                     if(numbers[k] !== '' && currentItem > numbers[k]){
                         comparableItems += 1;
                     }
                 }
             }
         }
-        if(comparableItems % 2 !== 0){
-            this.mixData(cellsAmount)
-        }
+
         console.log(comparableItems + ': ' + numbers);
-        return numbers;
+        return comparableItems % 2 !== 0 ? this.mixData(cellsAmount) : numbers;
     }
     fillContent(content, count) {
-        this.getData.cellsElement = Array.prototype.slice.call(document.querySelectorAll('.cell'));
+        this.gameData.cellsElement = Array.prototype.slice.call(document.querySelectorAll('.cell'));
         let emptyElement,
-            cellsElement = this.getData.cellsElement,
+            cellsElement = this.gameData.cellsElement,
             countElement = document.getElementById('count');
 
         for (let i = 0, len = content.length; i < len; i++){
@@ -142,7 +141,7 @@ class Game {
         };
     };
     move(element, keyDirection) {
-        let gameData = this.getData,
+        let gameData = this.gameData,
             cellElements = gameData.cellsElement,
             emptyElement = document.getElementById('empty'),
             replacedElement,
@@ -166,7 +165,7 @@ class Game {
         if(element || thisElement) {return this.replaceCells(replacedElement, gameData);}
     }
     replaceCells(replacedElement, data){
-        this.count += 1;
+
 
         let elementArgs = arguments[0],
             currentElement = elementArgs[0],
@@ -179,11 +178,12 @@ class Game {
                 current: [currentElement, currentElement.innerHTML],
                 empty: [emptyElement, emptyElement.innerHTML]
             };
-        if(!this.moveCells) {
-            this.moveCells = true;
+        if(!data.moveCells) {
+            data.moveCells = true;
             currentElement.className = 'cell ' + direction;
+
             setTimeout(function () {
-                document.getElementById('count').innerHTML = this.count;
+                data.count += 1;
                 for (let key in elementsData) {
                     if (elementsData.hasOwnProperty(key)) {
                         let element = elementsData[key][0],
@@ -194,13 +194,14 @@ class Game {
                         key === 'current' ? element.className = 'cell' : false;
                     }
                 }
-                this.moveCells = false;
+                document.getElementById('count').innerHTML = data.count;
+                data.moveCells = false;
                 return this.checkWinState(content) ? this.win(content) ? true : false : false;
             }.bind(this), 250);
         }
     }
     checkWinState(content){
-        let elements = this.getData.cellsElement, currentEl, currentElClassList, win = true, count = this.count;
+        let elements = this.gameData.cellsElement, currentEl, currentElClassList, win = true, count = this.gameData.count;
 
         for (let i = 0, len = content.length - 1; i < len; i++){
             currentEl = elements[i];
@@ -222,7 +223,7 @@ class Game {
     win(content){
         let count = this.count;
         document.getElementById('win').style.display = 'flex';
-        document.getElementById('win-count').innerHTML = this.count;
+        document.getElementById('win-count').innerHTML = this.gameData.count;
         localStorage.removeItem('content');
         localStorage.removeItem('count');
         return true;
