@@ -52,6 +52,22 @@ body {
     height: 100%;
 }
 
+#close {
+    background: #ffe173;
+    border: 5px solid #fff;
+    border-radius: 25px;
+    box-shadow: 0 0 10px #5a5301;
+    font: bold 15px Helvetica, sans-serif;
+    cursor: pointer;
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    text-align: center;
+    width: 30px;
+    height: 30px;
+    padding-top: 1px;
+}
+
 .win-info {
     background-color: #ffe173;
     border: 5px solid #fff;
