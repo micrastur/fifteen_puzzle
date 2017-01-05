@@ -40,8 +40,12 @@ class Game {
         this.activateGame();
 
 
-        winElement.onclick = function() {
-            winElement.style.display = 'none';
+         winElement.onclick = function(e) {
+            let elementId = e.target.id,
+                isClosed = !!(elementId === 'close'|| elementId === 'win');
+            if(isClosed){
+                winElement.style.display = 'none';
+            }
         }
     }
 
